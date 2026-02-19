@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IAM Result Checker</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    label { display: block; margin-top: 10px; }
+    input { padding: 5px; margin-top: 5px; width: 150px; }
+    button { margin-top: 10px; padding: 5px 10px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+    .pass { color: green; font-weight: bold; }
+    .fail { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>IAM Result Checker</h1>
+  
+  <label>Register Number:
+    <input type="text" id="regNo">
+  </label>
+  
+  <label>Date of Birth (DD MM YY):
+    <input type="text" id="dob" placeholder="e.g. 05 02 06">
+  </label>
+  
+  <button id="checkBtn">Check Result</button>
+  
+  <div id="result"></div>
+  
+  <script>
+    const url = https://script.google.com/macros/s/AKfycbwLnewjAkcl58uDPkMcNsvrcddy1uqxVEbMJJgBb5bAewrRIWV0mvAC1b9Zdv530JYb/exec; // Replace with your Google Apps Script URL
+
+    document.getElementById("checkBtn").addEventListener("click", () => {
+      const regInput = document.getElementById("regNo").value.trim();
+      let dobInput = document.getElementById("dob").value.trim();
+      const resultDiv = document.getElementById("result");
+
+      if (!regInput) {
+        resultDiv.innerHTML = "<p style='color:red;'>Please enter Register Number.</p>";
+        return;
+      }
+
+      // Auto-format DOB to DD MM YY
+      const dobParts = dobInput.split(" ").map(part => part.padStart(2, '0'));
+      if (dobParts.length !== 3 || dobParts.some(part => isNaN(part) || part.length !== 2)) {
+        resultDiv.innerHTML = "<p style='color:red;'>Date of Birth must be in DD MM YY format (e.g., 05 02 06).</p>";
+        return;
+      }
+      dobInput = dobParts.join(" ");
+
+      resultDiv.innerHTML = "Checking...";
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          // Exact case-sensitive match
+          const student = data.find(item =>
+            item["Register Number"] === regInput && item["Date of Birth"] === dobInput
+          );
+
+          if (student) {
+            resultDiv.innerHTML = `
+              <table>
+                <tr><th>Register Number</th><td>${student["Register Number"]}</td></tr>
+                <tr><th>Student Name</th><td>${student["Student Name"]}</td></tr>
+                <tr><th>Marks</th><td>${student["Marks"]}</td></tr>
+                <tr><th>Status</th><td class="${student["Status"].toLowerCase()}">${student["Status"]}</td></tr>
+              </table>
+            `;
+          } else {
+            resultDiv.innerHTML = "<p style='color:red;'>No result found. Check Register Number and Date of Birth (DD MM YY).</p>";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          resultDiv.innerHTML = "<p style='color:red;'>Error fetching data.</p>";
+        });
+    });
+  </script>
+</body>
+</html>
